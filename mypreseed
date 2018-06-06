@@ -1,0 +1,235 @@
+
+#########################################################################
+#                           !! WARNING !!                               #
+#                                                                       #
+#    This configuration is optimized for internal use at Axon Lab AG    #
+#                       especially for Docker Hosts.                    #
+#                                                                       #
+#            !! Do not Use this configuration without review !!         #
+#                                                                       #
+#########################################################################
+#                                                                       #
+# author: Fabian Hartmann                                               #
+# contact: fabian.hartmann@bluewin.ch                                   #
+#                                                                       #
+#########################################################################
+
+# LANGUAGE & COUNTRY
+d-i debian-installer/language string en
+d-i debian-installer/country string CH
+d-i debian-installer/locale string en_GB.UTF-8
+
+# KEYBOARD
+# Disable ask for keyboard
+d-i console-setup/ask_detect boolean false
+d-i keyboard-configuration/xkb-keymap select ch
+#d-i keyboard-configuration/layoutcode ch
+# set country of keyboard origin
+d-i	keyboard-configuration/layout	select German (Switzerland)
+# set keyboard layout
+d-i	keyboard-configuration/variant	select	Switzerland - German (Switzerland, legacy)
+
+# NETWORK
+# Network autoconfiguration
+d-i netcfg/choose_interface select auto
+# To pick a particular interface instead:
+#d-i netcfg/choose_interface select eth1
+# Link detection timeout in sec (default 3)
+#d-i netcfg/link_wait_timeout string 10
+# DHCP Server Timeout
+#d-i netcfg/dhcp_timeout string 60
+#d-i netcfg/dhcpv6_timeout string 60
+
+# Set Hostname (Hostname from DNS and DHCP overrides this setting)
+d-i netcfg/get_hostname string unassigned-hostname
+d-i netcfg/get_domain string unassigned-domain
+
+# Disable that annoying WEP key dialog.
+d-i netcfg/wireless_wep string
+
+# If non-free firmware is needed for the network or other hardware, you can
+# configure the installer to always try to load it, without prompting. Or
+# change to false to disable asking.
+d-i hw-detect/load_firmware boolean true
+
+## USER
+# Skip creation of a root account (normal user account will be able to
+# use sudo). The default is false; preseed this to true if you want to set
+# a root password.
+d-i passwd/root-login boolean false
+
+# To create a normal user account.
+d-i passwd/user-fullname string Administrator
+d-i passwd/username string administrator
+# Normal user's password, either in clear text
+#d-i passwd/user-password password insecure
+#d-i passwd/user-password-again password insecure
+# or encrypted using a crypt(3) hash.
+d-i passwd/user-password-crypted password $6$oraNnr0zF8eZN7$a.wGC8q/O3JfIvEcjS0MTTq8SMuQgJi0wpq3c5cC5HRuBGUNINvmnGE1Dhf.LB3Twjm5NTzcmODOo8io.NfMx.
+# Create the first user with the specified UID instead of the default.
+#d-i passwd/user-uid string 1010
+# The installer will warn about weak passwords. If you are sure you know
+# what you're doing and want to override it, uncomment this.
+d-i user-setup/allow-password-weak boolean true
+
+# The user account will be added to some standard initial groups. To
+# override that, use this.
+#d-i passwd/user-default-groups string audio cdrom video
+
+# Set to true if you want to encrypt the first user's home directory.
+d-i user-setup/encrypt-home boolean false
+
+
+## TIME
+# Controls whether or not the hardware clock is set to UTC.
+d-i clock-setup/utc boolean true
+# TimeZone /usr/share/zoneinfo/ for valid values.
+d-i time/zone string Europe/Zurich
+# Controls whether to use NTP to set the clock during the install
+d-i clock-setup/ntp boolean true
+# NTP server to use. The default is almost always fine here.
+#d-i clock-setup/ntp-server string pool.ntp.org
+
+## PARTITION
+# use the first SCSI/SATA hard disk
+#d-i partman-auto/disk string /dev/sda
+# Partiton method
+d-i partman-auto/method string lvm
+# disable warnings if old lvm are found
+d-i partman-lvm/device_remove_lvm boolean true
+d-i partman-lvm/confirm boolean true
+d-i partman-partition/confirm_write_new_label boolean true
+d-i partman-lvm/confirm_nooverwrite boolean true
+d-i partman-md/device_remove_md boolean true
+d-i partman-auto-lvm/no_boot boolean true
+d-i partman-auto-lvm/new_vg_name string lvm-disk
+
+# Used space in LVM
+#d-i partman-auto-lvm/guided_size string max
+# Partitioning format
+d-i partman-auto/choose_recipe select custom-lvm
+# Partition MAP
+d-i partman-auto/expert_recipe string                         \
+      custom-lvm ::                                           \
+              1 1 1 free method{ biosgrub } .                 \
+              250 41 500 ext2                                 \
+                      $primary{ }                             \
+                      $bootable{ }                            \
+                      method{ format } format{ }              \
+                      use_filesystem{ } filesystem{ ext4 }    \
+                      mountpoint{ /boot }                     \
+              .                                               \
+              5000 5010 20000 ext4                            \
+                      $lvmok{ }                               \
+                      lv_name{ home }                         \
+                      in_vg { lvm-disk }                      \
+                      method{ format } format{ }              \
+                      use_filesystem{ } filesystem{ ext4 }    \
+                      mountpoint{ /home }                     \
+              .                                               \
+              2000 2003 5000 ext4                             \
+                      $lvmok{ }                               \
+                      lv_name{ tmp }                          \
+                      in_vg { lvm-disk }                      \
+                      method{ format } format{ }              \
+                      use_filesystem{ } filesystem{ ext4 }    \
+                      mountpoint{ /tmp }                      \
+              .                                               \
+              5000 5001 6000 ext4                             \
+                      $lvmok{ }                               \
+                      lv_name{ usr }                          \
+                      in_vg { lvm-disk }                      \
+                      method{ format } format{ }              \
+                      use_filesystem{ } filesystem{ ext4 }    \
+                      mountpoint{ /usr }                      \
+              .                                               \
+              1000 1002 3000 ext4                             \
+                      $lvmok{ }                               \
+                      lv_name{ srv }                          \
+                      n_vg { lvm-disk }                       \
+                      method{ format } format{ }              \
+                      use_filesystem{ } filesystem{ ext4 }    \
+                      mountpoint{ /srv }                      \
+              .                                               \
+              4000 4004 5000 ext4                             \
+                      $lvmok{ }                               \
+                      lv_name{ opt }                          \
+                      in_vg { lvm-disk }                      \
+                      method{ format } format{ }              \
+                      use_filesystem{ } filesystem{ ext4 }    \
+                      mountpoint{ /opt }                      \
+              .                                               \
+              10000 10060 -1 ext4                             \
+                      $lvmok{ }                               \
+                      lv_name{ var }                          \
+                      in_vg { lvm-disk }                      \
+                      method{ format } format{ }              \
+                      use_filesystem{ } filesystem{ ext4 }    \
+                      mountpoint{ /var }                      \
+              .                                               \
+              8000 8010 10000 ext4                            \
+                      $lvmok{ }                               \
+                      lv_name{ root }                         \
+                      in_vg { lvm-disk }                      \
+                      method{ format } format{ }              \
+                      use_filesystem{ } filesystem{ ext4 }    \
+                      mountpoint{ / }                         \
+              .                                               \
+              64 512 300% linux-swap                          \
+                      $lvmok{ }                               \
+                      lv_name{ swap }                         \
+                      in_vg { lvm-disk }                      \
+                      method{ swap } format{ }                \
+              .
+
+# Change the default FS
+d-i partman/default_filesystem string ext4
+
+# Make sure no confirmation is needed
+d-i partman-partitioning/confirm_write_new_label boolean true
+d-i partman/choose_partition select finish
+d-i partman/confirm boolean true
+d-i partman/confirm_nooverwrite boolean true
+
+
+# The default is to mount by UUID, but you can also choose "traditional" to
+# use traditional device names, or "label" to try filesystem labels before
+# falling back to UUIDs.
+d-i partman/mount_style select uuid
+
+
+## APT & INSTALL SOFTWARE
+
+# Installer Mirror Settings
+d-i mirror/http/mirror select CH.archive.ubuntu.com
+# Suite to install.
+d-i mirror/suite string xenial
+# Suite to use for loading installer components
+d-i mirror/udeb/suite string xenial
+# Components to use for loading installer components
+d-i mirror/udeb/components multiselect main, restricted
+
+#tasksel tasksel/first multiselect ubuntu-server
+#tasksel tasksel/first multiselect server, openssh-server
+#d-i base-installer/kernel/override-image string linux-server
+#d-i base-installer/kernel/override-image string linux-image-amd64
+#d-i pkgsel/include string openssh-server update-motd
+d-i base-installer/kernel/image string linux-virtual
+d-i tasksel/first select openssh-server
+
+# Install aditional Software
+d-i pkgsel/include string openssh-server nfs-common wget ntp vim
+# Install Security Updates
+d-i pkgsel/update-policy select unattended-upgrades
+# Disable App USage Feedback to ubuntu
+popularity-contest popularity-contest/participate boolean false
+# Update system locate database
+d-i pkgsel/updatedb boolean true
+
+
+
+# COMPLETE INSTALL
+# Avoid that last message about the install being complete.
+d-i finish-install/reboot_in_progress note
+# Eject CD afther reboot
+d-i cdrom-detect/eject boolean true
