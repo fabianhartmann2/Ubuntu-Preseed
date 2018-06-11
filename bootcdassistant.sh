@@ -58,7 +58,7 @@ case $1 in
     echo "* modify {Path to dumped folder}               *"
 		echo "* create {Path to dumped folder} {Name for CD} {destination folder} *"
     echo "* You need to place a kickstart File called    *"
-    echo "* autoinstall.cfg into the working directory   *"
+    echo "* autoinstall.seed into the working directory  *"
 		echo "************************************************"
 		;;
 esac
